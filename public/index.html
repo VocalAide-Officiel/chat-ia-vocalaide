@@ -164,7 +164,19 @@
             z-index: 1000;
             transition: transform 0.2s, background-color 0.2s;
         }
-
+/* AJOUTE CECI JUSTE EN DESSOUS : Spécial Mobile */
+@media (max-width: 600px) {
+    .btn-aide-fixe {
+        bottom: 10px; /* On le colle plus près du bord bas */
+        right: 10px;  /* On le colle plus près du bord droit */
+        padding: 8px 15px; /* On le réduit un peu pour qu'il soit moins massif */
+        font-size: 0.8rem; /* On diminue la taille du texte */
+    }
+    
+    footer {
+        padding-bottom: 60px; /* On ajoute de l'espace en bas de la page pour ne pas que le bouton cache le copyright */
+    }
+}
 		</style>
 	</head>
 	<body>
