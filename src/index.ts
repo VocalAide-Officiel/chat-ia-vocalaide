@@ -13,7 +13,8 @@ import { Env, ChatMessage } from "./types";
 const MODEL_ID = "@cf/meta/llama-3.1-8b-instruct-fp8";
 
 // Configuration du filtre et mot de passe
-const BAD_WORDS = ["mot_interdit1", "mot_interdit2", "insulte"]; // <-- Ajoute tes mots à bloquer ici
+// N'hésite pas à ajouter, retirer ou modifier les mots ici
+const BAD_WORDS = ["calisse", "tabarnak", "osti", "crisse", "merde", "fuck", "gueule"]; 
 const UNLOCK_PASSWORD = "1234";
 
 // Default system prompt
@@ -83,50 +84,59 @@ async function handleChatRequest(
 
 		// 1. Analyse de l'historique pour gérer l'état de blocage
 		let isLocked = false;
-		let justLocked = false;
-		let justUnlocked = false;
+		let currentStatus = "normal"; // statuts possibles : "normal", "just_locked", "wrong_password", "just_unlocked"
 
 		for (const msg of messages) {
 			if (msg.role === "user") {
-				const text = msg.content.toLowerCase();
-				const hasBadWord = BAD_WORDS.some((word) =>
-					text.includes(word.toLowerCase()),
-				);
+				// On met en minuscules ET on enlève les accents pour la vérification
+				const text = msg.content
+					.toLowerCase()
+					.normalize("NFD")
+					.replace(/[\u0300-\u036f]/g, "");
+
+				// On vérifie si un mauvais mot est présent
+				const hasBadWord = BAD_WORDS.some((word) => {
+					const normalizedWord = word
+						.toLowerCase()
+						.normalize("NFD")
+						.replace(/[\u0300-\u036f]/g, "");
+					return text.includes(normalizedWord);
+				});
 
 				if (hasBadWord) {
-					// Un mauvais mot a été dit, on bloque le chat
+					// 🚨 Mauvais mot détecté : on verrouille
 					isLocked = true;
-					justLocked = true;
-					justUnlocked = false;
-				} else if (isLocked && text.trim() === UNLOCK_PASSWORD) {
-					// Le bon mot de passe a été entré
+					currentStatus = "just_locked";
+				} else if (isLocked && msg.content.trim() === UNLOCK_PASSWORD) {
+					// 🔑 Bon mot de passe entré : on déverrouille
 					isLocked = false;
-					justUnlocked = true;
-					justLocked = false;
+					currentStatus = "just_unlocked";
 				} else if (isLocked) {
-					// Toujours bloqué et mauvais mot de passe
-					justLocked = false;
-					justUnlocked = false;
+					// ❌ Toujours verrouillé et ce n'est pas le bon mot de passe
+					currentStatus = "wrong_password";
+				} else {
+					// ✅ Pas verrouillé, pas de mauvais mot : tout est normal
+					currentStatus = "normal";
 				}
 			}
 		}
 
-		// 2. Interception de la requête si le chat est bloqué
-		if (justLocked) {
+		// 2. Interception de la requête selon le statut final du dernier message
+		if (currentStatus === "just_locked") {
 			return createFakeStreamResponse(
 				"Langage inapproprié détecté. Le chat a été bloqué. Veuillez entrer le mot de passe pour continuer.",
 			);
 		}
-		if (isLocked) {
+		if (currentStatus === "wrong_password") {
 			return createFakeStreamResponse("Mauvais mot de passe.");
 		}
-		if (justUnlocked) {
+		if (currentStatus === "just_unlocked") {
 			return createFakeStreamResponse(
 				"Mot de passe accepté. Le chat est débloqué. Comment puis-je vous aider ?",
 			);
 		}
 
-		// 3. Suite normale (si non bloqué) : on envoie à l'IA
+		// 3. Suite normale (si currentStatus est "normal") : on envoie à l'IA
 		if (!messages.some((msg) => msg.role === "system")) {
 			messages.unshift({ role: "system", content: SYSTEM_PROMPT });
 		}
