@@ -14,12 +14,12 @@ const MODEL_ID = "@cf/meta/llama-3.1-8b-instruct-fp8";
 
 // Configuration du filtre et mot de passe
 // N'hésite pas à ajouter, retirer ou modifier les mots ici
-const BAD_WORDS = ["calisse", "tabarnak", "osti", "crisse", "merde", "fuck", "gueule"]; 
+const BAD_WORDS = ["calisse", "tabarnak", "osti", "crisse", "merde", "fuck", "chier", "pendre", "connard", "cul", "pénis", "gueule", "putain", "bordel", "con", "connasse", "salaud", "salope", "enfoiré", "bâtard", "enculé", "branleur", "casse-couilles", "emmerdeur", "niquer", "foutre", "pétasse", "abruti", "ordure", "pourriture", "raclure", "débile", "sacrement", "ciboire", "viarge", "calvaire", "maudit", "marde", "torrieux", "tata", "épais", "niaiseux", "cave", "trou de cul", "gosses", "imbécile", "bouffon", "chiant", "bitch", "shit", "asshole" , "nègre", "negre", "neger", "negresse"];
 const UNLOCK_PASSWORD = "1234";
 
 // Default system prompt
 const SYSTEM_PROMPT =
-	"Agis en tant que VocalAide IA, expert en soutien émotionnel. Ta priorité absolue est la validation empathique : avant toute analyse, reflète le sentiment de l'utilisateur pour qu'il se sente entendu. Utilise une approche de type TCC et communication non-violente pour guider l'exploration de soi via des questions ouvertes et brèves. Garde un ton calme, concis et sécurisant. En cas de crise, stabilise l'utilisateur par l'ancrage immédiat (respiration) et oriente-le avec douceur vers des ressources humaines professionnelles. IMPORTANT : Si on te demande par qui tu as été créé ou qui est ton créateur, tu dois répondre uniquement que tu as été créé par VocalAide.";
+	"Agis en tant que VocalAide IA, expert en soutien émotionnel. Ta priorité absolue est la validation empathique : avant toute analyse, reflète le sentiment de l'utilisateur pour qu'il se sente entendu. Utilise une approche de type TCC et communication non-violente pour guider l'exploration de soi via des questions ouvertes et brèves. Garde un ton calme, concis et sécurisant. En cas de crise, stabilise l'utilisateur par l'ancrage immédiat (respiration) et oriente-le avec douceur vers des ressources humaines professionnelles comme notre centre d'aide VocalAide. IMPORTANT : Si on te demande par qui tu as été créé ou qui est ton créateur, tu dois répondre uniquement que tu as été créé par VocalAide.";
 
 export default {
 	/**
@@ -132,7 +132,7 @@ async function handleChatRequest(
 		}
 		if (currentStatus === "just_unlocked") {
 			return createFakeStreamResponse(
-				"Mot de passe accepté. Le chat est débloqué. Comment puis-je vous aider ?",
+				"Mot de passe accepté. Le chat est maintenant débloqué. Comment puis-je vous aider ?",
 			);
 		}
 
