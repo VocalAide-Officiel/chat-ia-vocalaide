@@ -1,5 +1,6 @@
 /**
- * LLM Chat App Frontend - VocalAide IA
+ * LLM Chat App Frontend
+ *
  * Handles the chat UI interactions and communication with the backend API.
  */
 
@@ -7,10 +8,16 @@
 const chatMessages = document.getElementById("chat-messages");
 const userInput = document.getElementById("user-input");
 const sendButton = document.getElementById("send-button");
-const typingIndicator = document.getElementById("typing"); // Correspond à l'ID dans le nouveau HTML
+const typingIndicator = document.getElementById("typing-indicator");
 
 // Chat state
-let chatHistory = []; 
+let chatHistory = [
+	{
+		role: "assistant",
+		content:
+			"Hello! I'm VocalAide, an LLM chat application powered by Cloudflare Workers' AI. How can I help you today?",
+	},
+];
 let isProcessing = false;
 
 // Auto-resize textarea as user types
@@ -44,7 +51,7 @@ async function sendMessage() {
 	userInput.disabled = true;
 	sendButton.disabled = true;
 
-	// Add user message to chat UI
+	// Add user message to chat
 	addMessageToChat("user", message);
 
 	// Clear input
@@ -52,7 +59,7 @@ async function sendMessage() {
 	userInput.style.height = "auto";
 
 	// Show typing indicator
-	if(typingIndicator) typingIndicator.style.display = "block";
+	typingIndicator.classList.add("visible");
 
 	// Add message to history
 	chatHistory.push({ role: "user", content: message });
@@ -68,7 +75,7 @@ async function sendMessage() {
 		// Scroll to bottom
 		chatMessages.scrollTop = chatMessages.scrollHeight;
 
-		// On envoie le 'tone' défini dans le HTML
+		// Send request to API
 		const response = await fetch("/api/chat", {
 			method: "POST",
 			headers: {
@@ -76,19 +83,22 @@ async function sendMessage() {
 			},
 			body: JSON.stringify({
 				messages: chatHistory,
-				tone: window.currentTone || 'empathique' 
 			}),
 		});
 
-		if (!response.ok) throw new Error("Erreur réseau");
-		if (!response.body) throw new Error("Pas de corps de réponse");
+		// Handle errors
+		if (!response.ok) {
+			throw new Error("Failed to get response");
+		}
+		if (!response.body) {
+			throw new Error("Response body is null");
+		}
 
 		// Process streaming response
 		const reader = response.body.getReader();
 		const decoder = new TextDecoder();
 		let responseText = "";
 		let buffer = "";
-		
 		const flushAssistantText = () => {
 			assistantTextEl.textContent = responseText;
 			chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -99,57 +109,85 @@ async function sendMessage() {
 			const { done, value } = await reader.read();
 
 			if (done) {
+				// Process any remaining complete events in buffer
 				const parsed = consumeSseEvents(buffer + "\n\n");
 				for (const data of parsed.events) {
-					if (data === "[DONE]") break;
+					if (data === "[DONE]") {
+						break;
+					}
 					try {
 						const jsonData = JSON.parse(data);
-						let content = jsonData.response || jsonData.choices?.[0]?.delta?.content || "";
+						// Handle both Workers AI format (response) and OpenAI format (choices[0].delta.content)
+						let content = "";
+						if (
+							typeof jsonData.response === "string" &&
+							jsonData.response.length > 0
+						) {
+							content = jsonData.response;
+						} else if (jsonData.choices?.[0]?.delta?.content) {
+							content = jsonData.choices[0].delta.content;
+						}
 						if (content) {
 							responseText += content;
 							flushAssistantText();
 						}
-					} catch (e) {}
+					} catch (e) {
+						console.error("Error parsing SSE data as JSON:", e, data);
+					}
 				}
 				break;
 			}
 
+			// Decode chunk
 			buffer += decoder.decode(value, { stream: true });
 			const parsed = consumeSseEvents(buffer);
 			buffer = parsed.buffer;
 			for (const data of parsed.events) {
 				if (data === "[DONE]") {
 					sawDone = true;
+					buffer = "";
 					break;
 				}
 				try {
 					const jsonData = JSON.parse(data);
-					let content = jsonData.response || jsonData.choices?.[0]?.delta?.content || "";
+					// Handle both Workers AI format (response) and OpenAI format (choices[0].delta.content)
+					let content = "";
+					if (
+						typeof jsonData.response === "string" &&
+						jsonData.response.length > 0
+					) {
+						content = jsonData.response;
+					} else if (jsonData.choices?.[0]?.delta?.content) {
+						content = jsonData.choices[0].delta.content;
+					}
 					if (content) {
 						responseText += content;
 						flushAssistantText();
 					}
-				} catch (e) {}
+				} catch (e) {
+					console.error("Error parsing SSE data as JSON:", e, data);
+				}
 			}
-			if (sawDone) break;
+			if (sawDone) {
+				break;
+			}
 		}
 
-		// AJOUT IMPORTANT : Fin de réponse
+		// Add completed response to chat history
 		if (responseText.length > 0) {
 			chatHistory.push({ role: "assistant", content: responseText });
-            
-            // Si l'utilisateur a cliqué sur "Rapport PDF", on lance la génération
-            if (window.isGeneratingPdf) {
-                setTimeout(() => {
-                    window.triggerPdfDownload(responseText);
-                }, 500); // Petit délai pour laisser l'UI respirer
-            }
 		}
 	} catch (error) {
 		console.error("Error:", error);
-		addMessageToChat("assistant", "Désolé, une erreur technique est survenue.");
+		addMessageToChat(
+			"assistant",
+			"Sorry, there was an error processing your request.",
+		);
 	} finally {
-		if(typingIndicator) typingIndicator.style.display = "none";
+		// Hide typing indicator
+		typingIndicator.classList.remove("visible");
+
+		// Re-enable input
 		isProcessing = false;
 		userInput.disabled = false;
 		sendButton.disabled = false;
@@ -158,14 +196,15 @@ async function sendMessage() {
 }
 
 /**
- * Helper function to add message to chat UI
+ * Helper function to add message to chat
  */
 function addMessageToChat(role, content) {
 	const messageEl = document.createElement("div");
 	messageEl.className = `message ${role}-message`;
-	messageEl.innerHTML = `<p></p>`;
-    messageEl.querySelector("p").textContent = content;
+	messageEl.innerHTML = `<p>${content}</p>`;
 	chatMessages.appendChild(messageEl);
+
+	// Scroll to bottom
 	chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
