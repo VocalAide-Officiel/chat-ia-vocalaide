@@ -1,211 +1,278 @@
 <!doctype html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VocalAide IA</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <link rel="icon" type="image/png" href="https://static.wixstatic.com/media/3852f6_ec244183f7d94d7a8d513e68e877ba8d~mv2.png" />
-    <style>
-        :root {
-            --primary-color: #f6821f;
-            --primary-hover: #e67e22;
-            --light-bg: rgba(249, 250, 251, 0.9);
-            --border-color: #e5e7eb;
-            --text-color: #1f2937;
-            --user-msg-bg: #fff2e6;
-            --assistant-msg-bg: #ffffff;
-        }
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>VocalAide IA</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+		<link rel="icon" type="image/png" href="https://static.wixstatic.com/media/3852f6_ec244183f7d94d7a8d513e68e877ba8d~mv2.png" />
+		<style>
+			:root {
+				--primary-color: #f6821f;
+				--primary-hover: #e67e22;
+				--light-bg: #f9fafb;
+				--border-color: #e5e7eb;
+				--text-color: #1f2937;
+				--text-light: #6b7280;
+				--user-msg-bg: #fff2e6;
+				--assistant-msg-bg: #ffffff;
+			}
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            height: 100vh;
-            overflow: hidden; /* Empêche la page de descendre */
-            display: flex;
-            flex-direction: column;
-            background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.8)), 
-                              url('https://scontent-yyz1-1.xx.fbcdn.net/v/t39.30808-6/504456449_122107993778891724_6806407475622829072_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=53a332&_nc_ohc=L07Lc8pLZy8Q7kNvwFgNAB1&_nc_oc=Adp1xqmJJifXROGGrNV1WXNKvNw4o6PInnzDxY9ri9-AXUZz_5LSvXx45gRx6R-_mGk&_nc_zt=23&_nc_ht=scontent-yyz1-1.xx&_nc_gid=1hWS81IUXIC40ntOvN0-sQ&_nc_ss=7b2a8&oh=00_Af15newSodAcTMcFFMTscIolYGfC9BjvrExFVpHy2uUfhg&oe=69F20C91');
-            background-size: cover;
-            background-attachment: fixed;
-            padding: 1rem;
-        }
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+				line-height: 1.6;
+				color: var(--text-color);
+				max-width: 800px;
+				margin: 0 auto;
+				padding: 1rem;
+				height: 100vh;
+				overflow: hidden; /* Empêche la page de descendre */
+				display: flex;
+				flex-direction: column;
+				background-image: linear-gradient(rgba(255, 255, 255, 0.00), rgba(255, 255, 255, 0.85)), 
+								  url('https://scontent-yyz1-1.xx.fbcdn.net/v/t39.30808-6/504456449_122107993778891724_6806407475622829072_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=53a332&_nc_ohc=L07Lc8pLZy8Q7kNvwFgNAB1&_nc_oc=Adp1xqmJJifXROGGrNV1WXNKvNw4o6PInnzDxY9ri9-AXUZz_5LSvXx45gRx6R-_mGk&_nc_zt=23&_nc_ht=scontent-yyz1-1.xx&_nc_gid=1hWS81IUXIC40ntOvN0-sQ&_nc_ss=7b2a8&oh=00_Af15newSodAcTMcFFMTscIolYGfC9BjvrExFVpHy2uUfhg&oe=69F20C91');
+				background-size: cover;
+				background-attachment: fixed;
+				background-position: center;
+			}
 
-        header { text-align: center; margin-bottom: 1rem; border-bottom: 4px solid var(--primary-color); padding-bottom: 5px; }
-        header h1 { font-size: 1.5rem; color: var(--primary-color); }
+			header {
+				text-align: center;
+				margin-bottom: 1rem;
+				padding: 0.5rem 0;
+				border-bottom: 5px solid var(--primary-color);
+			}
 
-        /* SÉLECTEUR DE MODES */
-        .mode-selector {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .mode-btn {
-            padding: 6px 12px;
-            border: 1px solid var(--primary-color);
-            background: white;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: 0.3s;
-        }
-        .mode-btn.active { background: var(--primary-color); color: white; font-weight: bold; }
+			h1 { font-size: 1.5rem; color: var(--primary-color); }
 
-        /* CHAT CONTAINER */
-        .chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 800px;
-            width: 100%;
-            margin: 0 auto;
-            background: var(--light-bg);
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
+			.chat-container {
+				display: flex;
+				flex-direction: column;
+				flex-grow: 1;
+				border: 1px solid var(--border-color);
+				border-radius: 12px;
+				overflow: hidden;
+				background-color: rgba(255, 255, 255, 0.9);
+				box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+			}
 
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-        }
+			.chat-messages {
+				flex: 1;
+				overflow-y: auto;
+				padding: 1rem;
+				background-color: var(--light-bg);
+			}
 
-        .message { margin-bottom: 1rem; padding: 0.8rem; border-radius: 12px; max-width: 85%; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .user-message { background-color: var(--user-msg-bg); align-self: flex-end; border-bottom-right-radius: 2px; }
-        .assistant-message { background-color: var(--assistant-msg-bg); align-self: flex-start; border-bottom-left-radius: 2px; }
+			.message {
+				margin-bottom: 1rem;
+				padding: 0.75rem;
+				border-radius: 12px;
+				max-width: 80%;
+				box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+			}
 
-        .message-input { display: flex; padding: 1rem; background: white; border-top: 1px solid var(--border-color); }
-        #user-input { flex: 1; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; resize: none; outline: none; }
-        #send-button { margin-left: 0.5rem; padding: 0 1.2rem; background-color: var(--primary-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+			.user-message {
+				background-color: var(--user-msg-bg);
+				align-self: flex-end;
+				margin-left: auto;
+				border-bottom-right-radius: 2px;
+			}
 
-        .typing-indicator { display: none; font-style: italic; color: var(--primary-color); padding: 5px 1rem; font-size: 0.8rem; }
+			.assistant-message {
+				background-color: var(--assistant-msg-bg);
+				align-self: flex-start;
+				border-bottom-left-radius: 2px;
+			}
 
-        /* BOUTONS ACTIONS */
-        .action-group {
-            position: fixed;
-            bottom: 60px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 1000;
-        }
-        .btn-action {
-            padding: 10px 15px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 0.85rem;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: 0.2s;
-            text-align: center;
-        }
-        .btn-pdf { background: #2c3e50; color: white; }
-        .btn-aide { background: var(--primary-color); color: white; }
+			.message-input {
+				display: flex;
+				padding: 0.75rem;
+				border-top: 1px solid var(--border-color);
+				background-color: white;
+			}
 
-        footer {
-            padding: 10px;
-            text-align: center;
-            font-size: 0.8rem;
-            background: rgba(255,255,255,0.5);
-            margin-top: 5px;
-        }
+			#user-input {
+				flex: 1;
+				padding: 0.75rem;
+				border: 1px solid var(--border-color);
+				border-radius: 8px;
+				font-family: inherit;
+				resize: none;
+				outline: none;
+			}
 
-        @media (max-width: 600px) {
-            .action-group { position: static; flex-direction: row; justify-content: center; margin-top: 10px; }
-            body { height: auto; overflow: auto; }
-        }
-    </style>
-</head>
-<body>
+			#send-button {
+				margin-left: 0.5rem;
+				padding: 0 1.2rem;
+				background-color: var(--primary-color);
+				color: white;
+				border: none;
+				border-radius: 8px;
+				cursor: pointer;
+				font-weight: bold;
+			}
 
-<header>
-    <h1>Chat VocalAide IA</h1>
-    <p style="font-size: 0.8rem; color: #555;">Espace de bien-être numérique</p>
-</header>
+			/* Groupe de boutons flottants */
+			.action-group {
+				position: fixed;
+				bottom: 20px;
+				right: 20px;
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+				z-index: 1000;
+			}
 
-<div class="mode-selector">
-    <button class="mode-btn active" onclick="setMode('empathique', this)">🌿 Empathique</button>
-    <button class="mode-btn" onclick="setMode('coach', this)">🚀 Coach</button>
-    <button class="mode-btn" onclick="setMode('meditatif', this)">🧘 Méditatif</button>
-</div>
+			.btn-action {
+				background-color: var(--primary-color);
+				color: white;
+				padding: 12px 20px;
+				border-radius: 8px;
+				text-decoration: none;
+				font-weight: bold;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+				transition: 0.2s;
+				border: none;
+				cursor: pointer;
+				text-align: center;
+				font-size: 0.9rem;
+			}
 
-<div class="chat-container">
-    <div id="chat-messages" class="chat-messages">
-        <div class="message assistant-message">
-            <p>Bonjour ! Je suis VocalAide IA. Je suis ici pour t'écouter sans jugement. Comment te sens-tu ?</p>
-        </div>
-    </div>
-    <div class="typing-indicator" id="typing-indicator">VocalAide réfléchit...</div>
-    <div class="message-input">
-        <textarea id="user-input" placeholder="Parle-moi de ce que tu vis..." rows="1"></textarea>
-        <button id="send-button">Envoyer</button>
-    </div>
-</div>
+			.btn-rapport { background-color: #34495e; }
 
-<div class="action-group">
-    <button class="btn-action btn-pdf" onclick="generatePdfRapport()">📋 Rapport Psychologue (PDF)</button>
-    <a href="https://vocalaide.org/compte/aide" class="btn-action btn-aide">🆘 Aide humaine ?</a>
-</div>
+			footer {
+				margin-top: 0.5rem;
+				text-align: center;
+				font-size: 0.8rem;
+				color: #444;
+				padding-bottom: 10px;
+			}
 
-<footer>
-    <p>Tout droit réservé &copy; 2022-2026 par <strong>VocalAide</strong></p>
-</footer>
+			@media (max-width: 600px) {
+				.action-group { 
+					position: static; 
+					flex-direction: row; 
+					justify-content: center; 
+					margin-top: 10px;
+					padding-bottom: 10px;
+				}
+				body { overflow: auto; height: auto; }
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>Chat VocalAide IA</h1>
+			<p style="font-size: 0.8rem; color: var(--text-light);">Espace de bien-être numérique</p>
+		</header>
 
-<script>
-    let currentTone = 'empathique';
-    const { jsPDF } = window.jspdf;
+		<div class="chat-container">
+			<div id="chat-messages" class="chat-messages">
+				<div class="message assistant-message">
+					<p>Bonjour ! Je suis VocalAide IA. Comment puis-je vous accompagner aujourd'hui ?</p>
+				</div>
+			</div>
 
-    function setMode(mode, btn) {
-        currentTone = mode;
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-    }
+			<div id="typing-indicator" style="display:none; padding: 10px; font-style: italic; font-size: 0.8rem; color: var(--primary-color);">
+				VocalAide IA réfléchit...
+			</div>
 
-    // Gestion de la modération (mauvais mots)
-    const badWords = ["calisse", "tabarnak", "hostie", "gueule"]; 
-    
-    function containsBadWords(text) {
-        return badWords.some(word => text.toLowerCase().includes(word));
-    }
+			<div class="message-input">
+				<textarea id="user-input" placeholder="Écrivez ici..." rows="1"></textarea>
+				<button id="send-button">Envoyer</button>
+			</div>
+		</div>
 
-    async function generatePdfRapport() {
-        window.isGeneratingPdf = true;
-        const input = document.getElementById('user-input');
-        input.value = "Peux-tu me faire un résumé structuré de notre échange pour mon psychologue ?";
-        document.getElementById('send-button').click();
-    }
+		<footer>
+			<p>Tout droit réservé &copy; 2022-2026 par <strong>VocalAide</strong></p>
+		</footer>
 
-    // Fonction appelée par chat.js quand l'IA a fini
-    window.triggerPdfDownload = function(text) {
-        const doc = new jsPDF();
-        doc.setFillColor(246, 130, 31);
-        doc.rect(0, 0, 210, 35, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(18);
-        doc.text("BILAN D'ACCOMPAGNEMENT VOCALAIDE", 105, 15, { align: 'center' });
-        doc.setFontSize(10);
-        doc.text("Généré le " + new Date().toLocaleDateString(), 105, 25, { align: 'center' });
-        
-        doc.setTextColor(40);
-        doc.setFontSize(11);
-        const splitText = doc.splitTextToSize(text, 170);
-        doc.text(splitText, 20, 50);
-        
-        doc.save("Rapport-VocalAide-" + new Date().toISOString().slice(0,10) + ".pdf");
-        window.isGeneratingPdf = false;
-    };
-</script>
-<script src="chat.js"></script>
+		<div class="action-group">
+			<button class="btn-action btn-rapport" onclick="generateReport()">📋 Rapport Psychologue (PDF)</button>
+			<a href="https://vocalaide.org/compte/aide" class="btn-action">🆘 Aide humaine ?</a>
+		</div>
 
-</body>
+		<script>
+			// Configuration
+			const BAD_WORDS = ["mot1", "mot2", "insulte"]; // Ajoute tes mots ici
+			const PASSWORD = "1234"; // Ton mot de passe de déblocage
+			let isLocked = false;
+			const { jsPDF } = window.jspdf;
+
+			// Fonction pour générer le PDF
+			function generateReport() {
+				const messages = document.querySelectorAll('.message');
+				if (messages.length <= 1) {
+					alert("Pas assez de contenu pour générer un rapport.");
+					return;
+				}
+
+				const doc = new jsPDF();
+				doc.setFillColor(246, 130, 31); // Orange VocalAide
+				doc.rect(0, 0, 210, 40, 'F');
+				
+				doc.setTextColor(255, 255, 255);
+				doc.setFontSize(22);
+				doc.text("RAPPORT D'ACCOMPAGNEMENT", 105, 20, { align: 'center' });
+				doc.setFontSize(10);
+				doc.text("Généré par VocalAide IA - " + new Date().toLocaleDateString(), 105, 30, { align: 'center' });
+
+				doc.setTextColor(40, 40, 40);
+				doc.setFontSize(12);
+				let y = 55;
+
+				messages.forEach((msg) => {
+					const role = msg.classList.contains('user-message') ? "Patient : " : "IA : ";
+					const text = msg.innerText;
+					const splitText = doc.splitTextToSize(role + text, 170);
+					
+					if (y + splitText.length * 7 > 280) {
+						doc.addPage();
+						y = 20;
+					}
+					
+					doc.text(splitText, 20, y);
+					y += (splitText.length * 7) + 5;
+				});
+
+				doc.save("Rapport_VocalAide_" + new Date().toISOString().slice(0,10) + ".pdf");
+			}
+
+			// Interception pour les mauvais mots
+			const inputField = document.getElementById('user-input');
+			const sendBtn = document.getElementById('send-button');
+
+			function checkModeration() {
+				const text = inputField.value.toLowerCase();
+				
+				if (isLocked) {
+					if (text.trim() === PASSWORD) {
+						isLocked = false;
+						alert("Chat débloqué.");
+						inputField.value = "";
+						return true;
+					}
+					alert("Chat bloqué. Entrez le mot de passe.");
+					return false;
+				}
+
+				if (BAD_WORDS.some(word => text.includes(word))) {
+					isLocked = true;
+					alert("Langage non autorisé. Chat bloqué. Entrez le mot de passe pour continuer.");
+					inputField.value = "";
+					return false;
+				}
+				return true;
+			}
+
+			// Note : Ton chat.js original doit être compatible avec cet ID 'typing-indicator'
+		</script>
+		<script src="chat.js"></script>
+	</body>
 </html>
