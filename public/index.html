@@ -20,10 +20,14 @@
 				--assistant-msg-bg: #f3f4f6;
 			}
 
-			* { box-sizing: border-box; margin: 0; padding: 0; }
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
 
 			body {
-				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 				line-height: 1.6;
 				color: var(--text-color);
 				max-width: 800px;
@@ -54,7 +58,6 @@
 				border: 1px solid var(--border-color);
 				border-radius: 8px;
 				overflow: hidden;
-				background: white;
 			}
 
 			.chat-messages {
@@ -73,7 +76,8 @@
 				max-width: 80%;
 			}
 
-			.user-message { background-color: var(--user-msg-bg); align-self: flex-end; }
+			.message p { white-space: pre-line; margin: 0; overflow-wrap: anywhere; }
+			.user-message { background-color: var(--user-msg-bg); align-self: flex-end; margin-left: auto; }
 			.assistant-message { background-color: var(--assistant-msg-bg); align-self: flex-start; }
 
 			.message-input {
@@ -88,7 +92,9 @@
 				padding: 0.75rem;
 				border: 1px solid var(--border-color);
 				border-radius: 4px;
+				font-family: inherit;
 				resize: none;
+				min-height: 44px;
 			}
 
 			#send-button {
@@ -99,12 +105,15 @@
 				border: none;
 				border-radius: 4px;
 				cursor: pointer;
-				font-weight: bold;
+				transition: background-color 0.2s;
 			}
+
+			.typing-indicator { display: none; font-style: italic; color: var(--text-light); padding: 1rem; }
+			.typing-indicator.visible { display: block; }
 
 			footer { margin-top: 1rem; text-align: center; font-size: 0.85rem; color: #000000; }
 
-			/* Bouton Besoin d'aide (Droite) */
+			/* Bouton Aide (Droite) */
 			.btn-aide-fixe {
 				position: fixed; bottom: 20px; right: 20px;
 				background-color: var(--primary-color); color: white;
@@ -115,9 +124,9 @@
 			}
 
 			/* Bouton Rapport (Gauche) */
-			#report-button {
+			.btn-rapport-fixe {
 				position: fixed; bottom: 20px; left: 20px;
-				background-color: #2c3e50; color: white;
+				background-color: #1f2937; color: white;
 				padding: 12px 20px; border-radius: 8px;
 				border: none; cursor: pointer; font-weight: bold;
 				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -125,9 +134,9 @@
 			}
 
 			@media (max-width: 600px) {
-				.btn-aide-fixe, #report-button { bottom: 10px; padding: 8px 15px; font-size: 0.7rem; }
+				.btn-aide-fixe, .btn-rapport-fixe { bottom: 10px; padding: 8px 15px; font-size: 0.8rem; }
 				.btn-aide-fixe { right: 10px; }
-				#report-button { left: 10px; }
+				.btn-rapport-fixe { left: 10px; }
 				footer { padding-bottom: 60px; }
 			}
 		</style>
@@ -141,67 +150,64 @@
 		<div class="chat-container">
 			<div id="chat-messages" class="chat-messages">
 				<div class="message assistant-message">
-					<p>Bonjour ! Je suis VocalAide IA, ton espace d'écoute bienveillant. Comment te sens-tu aujourd'hui ?</p>
+					<p>Bonjour ! Je suis VocalAide IA, ton espace d'écoute bienveillant. Je suis ici pour t'accompagner. Comment te sens-tu aujourd'hui ?</p>
 				</div>
 			</div>
-
+			<div class="typing-indicator" id="typing-indicator">VocalAide IA réfléchit...</div>
 			<div class="message-input">
 				<textarea id="user-input" placeholder="Tapez votre message ici..." rows="1"></textarea>
 				<button id="send-button">Envoyer</button>
 			</div>
 		</div>
 
-		<footer>
-			<p>Tout droit réservé &copy; 2022-2026 par VocalAide | vocalaide.org</p>
-		</footer>
+		<footer><p>Tout droit réservé &copy; 2022-2026 par VocalAide</p></footer>
 
-		<button id="report-button">📄 Rapport (PDF)</button>
+		<button class="btn-rapport-fixe" id="btn-pdf">Générer Rapport PDF</button>
 		<a href="https://vocalaide.org/compte/aide" class="btn-aide-fixe">Besoin d'aide humaine ?</a>
 
 		<script>
-			const chatMessages = document.getElementById('chat-messages');
-			const userInput = document.getElementById('user-input');
+			// Correction de l'envoi
 			const sendBtn = document.getElementById('send-button');
+			const input = document.getElementById('user-input');
+			const messagesContainer = document.getElementById('chat-messages');
 
-			// FONCTION ENVOYER (Correction)
-			function sendMessage() {
-				const text = userInput.value.trim();
-				if (text !== "") {
-					const msgDiv = document.createElement('div');
-					msgDiv.className = 'message user-message';
-					msgDiv.innerHTML = `<p>${text}</p>`;
-					chatMessages.appendChild(msgDiv);
-					userInput.value = "";
-					chatMessages.scrollTop = chatMessages.scrollHeight;
-					// Note: La réponse de l'IA doit être gérée par ton fichier chat.js
+			sendBtn.addEventListener('click', () => {
+				const text = input.value.trim();
+				if (text) {
+					const div = document.createElement('div');
+					div.className = 'message user-message';
+					div.innerHTML = `<p>${text}</p>`;
+					messagesContainer.appendChild(div);
+					input.value = '';
+					messagesContainer.scrollTop = messagesContainer.scrollHeight;
+					// Ton chat.js prendra la relève ici pour la réponse IA
 				}
-			}
+			});
 
-			sendBtn.addEventListener('click', sendMessage);
-			userInput.addEventListener('keypress', (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-
-			// LOGIQUE PDF
-			document.getElementById('report-button').addEventListener('click', () => {
+			// Génération du PDF
+			document.getElementById('btn-pdf').addEventListener('click', () => {
 				const { jsPDF } = window.jspdf;
 				const doc = new jsPDF();
 				let y = 20;
 
-				doc.setFontSize(18); doc.text("Rapport VocalAide IA", 105, y, {align: "center"});
-				y += 20;
-				doc.setFontSize(12); doc.text("Résumé : Historique de discussion pour suivi professionnel.", 20, y);
+				doc.setFontSize(16);
+				doc.text("Rapport de séance - VocalAide IA", 20, y);
+				y += 10;
+				doc.setFontSize(10);
+				doc.text("Résumé : Historique complet de la discussion pour usage professionnel.", 20, y);
 				y += 15;
 
 				document.querySelectorAll('.message').forEach(m => {
 					const isUser = m.classList.contains('user-message');
-					const text = (isUser ? "PATIENT : " : "IA : ") + m.innerText;
-					const lines = doc.splitTextToSize(text, 170);
-					if (y > 270) { doc.addPage(); y = 20; }
-					doc.text(lines, 20, y);
-					y += (lines.length * 7);
+					const label = isUser ? "PATIENT : " : "IA : ";
+					const text = label + m.innerText;
+					const splitText = doc.splitTextToSize(text, 170);
+					if (y + (splitText.length * 7) > 280) { doc.addPage(); y = 20; }
+					doc.text(splitText, 20, y);
+					y += (splitText.length * 7) + 2;
 				});
 
-				doc.setFontSize(10);
-				doc.text("Fait par VocalAide IA - vocalaide.org", 105, 290, {align: "center"});
+				doc.text("Fait par VocalAide IA de vocalaide.org", 20, 290);
 				doc.save("Rapport_VocalAide.pdf");
 			});
 		</script>
