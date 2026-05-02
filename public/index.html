@@ -124,6 +124,7 @@
 				<div class="modal-options">
 					<button class="btn-option" onclick="generatePDF('full')">📄 Rapport de séance complet</button>
 					<button class="btn-option" onclick="generatePDF('summary')">🧠 Résumé émotionnel (Patient seul)</button>
+					<button class="btn-option" onclick="generatePDF('analysis')">🤖 Analyse IA (Résumé et Bilan)</button>
 				</div>
 				<div class="btn-close-modal" onclick="closeModal()">Annuler</div>
 			</div>
@@ -164,14 +165,19 @@
 				
 				let y = 20;
 
-				// --- DESIGN DE L'ENTÊTE (CONSERVÉ À L'IDENTIQUE) ---
+				// --- DESIGN DE L'ENTÊTE ---
 				doc.setFillColor(246, 130, 31); 
 				doc.rect(0, 0, 210, 40, 'F');
 				
 				doc.setTextColor(255, 255, 255);
 				doc.setFontSize(22);
 				doc.setFont("helvetica", "bold");
-				doc.text("RAPPORT DE SÉANCE", 105, 20, { align: "center" });
+
+				// Choix du titre dynamique
+				let titleText = "RAPPORT DE SÉANCE";
+				if (type === 'analysis') titleText = "ANALYSE IA DE LA SÉANCE";
+				
+				doc.text(titleText, 105, 20, { align: "center" });
 				
 				doc.setFontSize(12);
 				doc.text("VocalAide IA - Soutien et Écoute", 105, 30, { align: "center" });
@@ -192,7 +198,7 @@
 
 				if (type === 'full') {
 					// ==========================================
-					// OPTION 1 : TON CODE ET TEXTES ORIGINAUX
+					// OPTION 1 : RAPPORT COMPLET (ORIGINAL)
 					// ==========================================
 					doc.setFontSize(14);
 					doc.setFont("helvetica", "bold");
@@ -217,10 +223,7 @@
 						const label = isUser ? "PATIENT :" : "VOCALAIDE IA :";
 						const content = msg.innerText;
 
-						if (y > 270) {
-							doc.addPage();
-							y = 20;
-						}
+						if (y > 270) { doc.addPage(); y = 20; }
 
 						doc.setFontSize(10);
 						doc.setFont("helvetica", "bold");
@@ -236,9 +239,9 @@
 						y += (splitText.length * 5) + 7;
 					});
 
-				} else {
+				} else if (type === 'summary') {
 					// ==========================================
-					// OPTION 2 : RÉSUMÉ (Paroles du patient avec même style)
+					// OPTION 2 : RÉSUMÉ (PAROLES DU PATIENT)
 					// ==========================================
 					doc.setFontSize(14);
 					doc.setFont("helvetica", "bold");
@@ -260,10 +263,7 @@
 
 					messages.forEach((msg) => {
 						if (msg.classList.contains('user-message')) {
-							if (y > 270) {
-								doc.addPage();
-								y = 20;
-							}
+							if (y > 270) { doc.addPage(); y = 20; }
 
 							doc.setTextColor(246, 130, 31);
 							doc.setFont("helvetica", "bold");
@@ -278,9 +278,46 @@
 							y += (splitMsg.length * 5) + 5;
 						}
 					});
+
+				} else if (type === 'analysis') {
+					// ==========================================
+					// OPTION 3 : ANALYSE IA (NOUVEAU)
+					// ==========================================
+					
+					// Textes d'attente (à remplacer plus tard par la vraie réponse de l'IA)
+					const texteResumeSimple = "[RÉSUMÉ SIMPLE - ~100 mots] L'IA insérera ici un résumé concis de la séance. Il décrira brièvement le contexte, le ressenti général du patient et les thèmes principaux abordés au cours de la discussion, pour donner une vue d'ensemble rapide au professionnel de santé.";
+					
+					const texteAnalyseComplete = "[ANALYSE COMPLÈTE - ~500 mots] L'IA détaillera ici son analyse en profondeur. Cette section abordera la dynamique émotionnelle du patient, les blocages identifiés, la progression au fil des échanges, et potentiellement des pistes d'intervention ou des observations cliniques pertinentes basées sur la conversation intégrale.";
+
+					// 1. Section Résumé Simple
+					doc.setFontSize(14);
+					doc.setFont("helvetica", "bold");
+					doc.text("1. Résumé de la séance", 20, y);
+					y += 10;
+					
+					doc.setFontSize(10);
+					doc.setFont("helvetica", "normal");
+					const splitResume = doc.splitTextToSize(texteResumeSimple, 170);
+					doc.text(splitResume, 20, y);
+					y += (splitResume.length * 5) + 15;
+
+					// Vérification de la page avant la grande section
+					if (y > 250) { doc.addPage(); y = 20; }
+
+					// 2. Section Analyse Complète
+					doc.setFontSize(14);
+					doc.setFont("helvetica", "bold");
+					doc.text("2. Analyse complète par l'IA", 20, y);
+					y += 10;
+					
+					doc.setFontSize(10);
+					doc.setFont("helvetica", "normal");
+					const splitAnalyse = doc.splitTextToSize(texteAnalyseComplete, 170);
+					doc.text(splitAnalyse, 20, y);
+					y += (splitAnalyse.length * 5) + 10;
 				}
 
-				// --- DESIGN DU PIED DE PAGE (CONSERVÉ À L'IDENTIQUE) ---
+				// --- DESIGN DU PIED DE PAGE ---
 				const pageCount = doc.internal.getNumberOfPages();
 				for(let i = 1; i <= pageCount; i++) {
 					doc.setPage(i);
@@ -290,7 +327,13 @@
 					doc.text(`Page ${i} / ${pageCount}`, 190, 290);
 				}
 
-				doc.save(type === 'full' ? "Rapport_VocalAide_Discussion.pdf" : "Bilan_Emotions_VocalAide.pdf");
+				// Nom du fichier personnalisé selon le choix
+				let fileName = "Document_VocalAide.pdf";
+				if (type === 'full') fileName = "Rapport_VocalAide_Discussion.pdf";
+				else if (type === 'summary') fileName = "Bilan_Emotions_VocalAide.pdf";
+				else if (type === 'analysis') fileName = "Analyse_IA_VocalAide.pdf";
+
+				doc.save(fileName);
 			}
 		</script>
 	</body>
