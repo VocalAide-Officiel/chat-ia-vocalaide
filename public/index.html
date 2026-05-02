@@ -144,7 +144,7 @@
     // Ouvre la fenêtre quand on clique sur le bouton Rapport
     document.getElementById('report-button').addEventListener('click', () => {
         // On vérifie le chatHistory (venant de chat.js)
-        if (chatHistory.length <= 3) {
+        if (chatHistory.length <= 6) {
             alert("Il n'y a pas encore assez de messages pour générer un rapport.");
             return;
         }
@@ -174,10 +174,10 @@
 
             try {
                 // Préparation de la consigne
-                const promptIA = `Agis comme un psychologue clinicien professionnel. Analyse l'intégralité de notre conversation précédente.
+                const promptIA = `Analyse l'intégralité de notre conversation précédente.
 Consigne très stricte : Sépare ta réponse en deux parties exactes en utilisant le séparateur "|||".
 Partie 1 : Un résumé simple d'environ 100 mots.
-Partie 2 : Une analyse psychologique complète d'environ 500 mots.
+Partie 2 : Une analyse psychologique complète d'environ 500 mots sur ce qui a été dit dans la conversation.
 Génère uniquement le texte demandé, sans aucune phrase d'introduction ni de conclusion.`;
 
                 const messagesForAnalysis = [...chatHistory, { role: "user", content: promptIA }];
