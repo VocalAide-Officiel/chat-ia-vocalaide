@@ -130,6 +130,7 @@
 							<button class="btn-mode" onclick="selectMode('empathique')">❤️ Mode Empathique<br><span style="font-size: 0.8em; font-weight: normal; color: var(--text-color);">Écoute douce, sans jugement, idéale pour vider son sac et se sentir compris.</span></button>
 							<button class="btn-mode" onclick="selectMode('coach')">🎯 Mode Coaching<br><span style="font-size: 0.8em; font-weight: normal; color: var(--text-color);">L'IA devient proactive, pose des questions stimulantes et vous aide à agir.</span></button>
 							<button class="btn-mode" onclick="selectMode('psychologue')">🧠 Mode Psychologue<br><span style="font-size: 0.8em; font-weight: normal; color: var(--text-color);">Analyse profonde, exploration de vos pensées et accompagnement clinique.</span></button>
+							<button class="btn-mode" onclick="selectMode('apprendre')">🎓 Mode Apprendre (Éducatif)<br><span style="font-size: 0.8em; font-weight: normal; color: var(--text-color);">L'IA devient un professeur neutre qui explique la théorie des émotions sans analyse personnelle.</span></button>
 						</div>
 					</div>
 				</div>
@@ -181,6 +182,9 @@
 		} else if (mode === 'empathique') {
 			modeName = "Empathique";
 			promptMode = "Instruction système silencieuse : L'utilisateur vient de choisir le 'Mode Empathique'. Pour toute la suite de cette conversation, offre une écoute douce, chaleureuse et sans jugement. Contente-toi de valider ses émotions, de le comprendre et de le laisser vider son sac. Ne cherche pas forcément à trouver des solutions à sa place.";
+		} else if (mode === 'apprendre') {
+			modeName = "Apprendre (Éducatif)";
+			promptMode = "Instruction système silencieuse : L'utilisateur vient de choisir le 'Mode Apprendre'. Pour toute la suite de cette conversation, tu es un PROFESSEUR NEUTRE spécialisé dans les émotions. CONSIGNES STRICTES : 1. Ne demande jamais ce qui ne va pas, ce que l'utilisateur fait ou ce qu'il ressent. 2. Fais une analyse neutre, n'utilise pas l'utilisateur comme exemple (ne dis jamais 'je vois que tu te sens...'). 3. Réponds uniquement de façon théorique. Exemple : 'Être fâché est une émotion qui est très courante...'";
 		}
 
 		// Cache le menu de sélection
@@ -195,7 +199,13 @@
 		const chatMessages = document.getElementById('chat-messages');
 		const confirmDiv = document.createElement('div');
 		confirmDiv.className = 'message assistant-message';
-		confirmDiv.innerHTML = `<p>✅ <strong>Mode ${modeName} activé.</strong> Je suis prêt. Prenez votre temps pour me répondre et me dire ce que vous avez sur le cœur.</p>`;
+		
+		if (mode === 'apprendre') {
+			confirmDiv.innerHTML = `<p>✅ <strong>Mode ${modeName} activé.</strong> Je suis prêt à répondre à vos questions sur le fonctionnement des émotions d'un point de vue théorique.</p>`;
+		} else {
+			confirmDiv.innerHTML = `<p>✅ <strong>Mode ${modeName} activé.</strong> Je suis prêt. Prenez votre temps pour me répondre et me dire ce que vous avez sur le cœur.</p>`;
+		}
+		
 		chatMessages.appendChild(confirmDiv);
 		
 		// Descend le scroll vers le bas
